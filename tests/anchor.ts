@@ -234,7 +234,7 @@ describe("anchor", () => {
       .createTest(new anchor.BN(12))
       .accounts({
         signer: payer.publicKey,
-        testAccount: testAA,
+        newAccount: testAA,
         providerAa: payerATA,
         mint: mint,
       })
@@ -265,7 +265,7 @@ describe("anchor", () => {
       signer: receiver.publicKey,
       provider: payer.publicKey,
       info: testAA,
-      testAccount: subAA,
+      newAccount: subAA,
     })
     .instruction();
 

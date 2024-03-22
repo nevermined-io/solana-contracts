@@ -18,9 +18,9 @@ pub mod anchor {
         NoMatch,
     }
 
-    pub fn create_test(ctx: Context<CreateTest>, cost: u64) -> Result<()> {
+    pub fn create_test(ctx: Context<CreateService>, cost: u64) -> Result<()> {
         msg!("Creating something");
-        *ctx.accounts.test_account = Test {
+        *ctx.accounts.new_account = Service {
             owner: ctx.accounts.signer.key(),
             provider: ctx.accounts.signer.key(),
             cost,
@@ -33,7 +33,7 @@ pub mod anchor {
         if ctx.accounts.info.provider != ctx.accounts.provider.key() {
             return err!(Errors::NoMatch);
         };
-        *ctx.accounts.test_account = TestAccount {
+        *ctx.accounts.new_account = Subscription {
             consumer: ctx.accounts.signer.key(),
             provider: ctx.accounts.provider.key(),
             info: ctx.accounts.info.key(),
@@ -59,7 +59,7 @@ pub mod anchor {
         Ok(())
     }
 
-
+    // Stuff for token
     pub fn create_token(_ctx: Context<CreateToken>, _token_name: String) -> Result<()> {
         msg!("Create Token");
         Ok(())
@@ -136,19 +136,19 @@ pub struct CreateToken<'info> {
 
 #[derive(Accounts)]
 #[instruction(cost: u64)]
-pub struct CreateTest<'info> {
+pub struct CreateService<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     pub provider_aa: InterfaceAccount<'info, TokenAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
     #[account(
         init,
-        space= 8 + Test::INIT_SPACE,
+        space= 8 + Service::INIT_SPACE,
         payer = signer,
         seeds = [b"test", signer.key().as_ref()],
         bump,
     )]
-    pub test_account: Account<'info, Test>,
+    pub new_account: Account<'info, Service>,
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -158,17 +158,17 @@ pub struct CreateEmpty<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(mut)]
-    pub info: Account<'info, Test>,
+    pub info: Account<'info, Service>,
     #[account(mut)]
     pub provider: SystemAccount<'info>,
     #[account(
         init,
-        space= 8 + TestAccount::INIT_SPACE,
+        space= 8 + Subscription::INIT_SPACE,
         payer = signer,
         seeds = [b"test", signer.key().as_ref(), info.key().as_ref()],
         bump,
     )]
-    pub test_account: Account<'info, TestAccount>,
+    pub new_account: Account<'info, Subscription>,
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -178,9 +178,9 @@ pub struct BuySubscription<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(mut)]
-    pub info: Account<'info, Test>,
+    pub info: Account<'info, Service>,
     #[account(mut)]
-    pub sub: Account<'info, TestAccount>,
+    pub sub: Account<'info, Subscription>,
     #[account(mut)]
     pub provider_aa: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
@@ -267,7 +267,7 @@ pub struct TransferToken2<'info> {
 // document
 #[account]
 #[derive(InitSpace)]
-pub struct Test {
+pub struct Service {
     pub owner: Pubkey,
     pub provider: Pubkey,
     pub cost: u64,
@@ -276,7 +276,7 @@ pub struct Test {
 // account for consumer (agreement)
 #[account]
 #[derive(InitSpace)]
-pub struct TestAccount {
+pub struct Subscription {
     pub provider: Pubkey,
     pub consumer: Pubkey,
     pub info: Pubkey,
