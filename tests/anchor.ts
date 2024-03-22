@@ -250,7 +250,7 @@ describe("anchor", () => {
     );
     console.log("Your transaction signature", sig);
 
-    console.log(await program.account.test.fetch(testAA))
+    console.log(await program.account.service.fetch(testAA))
     console.log(await connection.getAccountInfo(testAA))
 
     console.log(program.programId)
@@ -277,7 +277,7 @@ describe("anchor", () => {
       tx,
       [receiver]
     );
-    console.log(await program.account.testAccount.fetch(subAA))
+    console.log(await program.account.subscription.fetch(subAA))
 
   });
 
@@ -306,7 +306,7 @@ describe("anchor", () => {
       tx,
       [receiver]
     );
-    console.log(await program.account.testAccount.fetch(subAA))
+    console.log(await program.account.subscription.fetch(subAA))
 
   });
 
