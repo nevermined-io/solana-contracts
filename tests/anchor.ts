@@ -310,4 +310,52 @@ describe("anchor", () => {
 
   });
 
+  it("mint subscription", async () => {
+
+    const tx = new anchor.web3.Transaction();
+    const ix = await program.methods
+    .mintSubscription(new anchor.BN(100))
+    .accounts({
+      signer: payer.publicKey,
+      info: testAA,
+      sub: subAA,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+   })
+    .instruction();
+
+    tx.add(ix);
+
+    const sig = await anchor.web3.sendAndConfirmTransaction(
+      program.provider.connection,
+      tx,
+      [payer]
+    );
+    console.log(await program.account.subscription.fetch(subAA))
+
+  });
+
+  it("burn subscription", async () => {
+
+    const tx = new anchor.web3.Transaction();
+    const ix = await program.methods
+    .burnSubscription(new anchor.BN(100))
+    .accounts({
+      signer: payer.publicKey,
+      info: testAA,
+      sub: subAA,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+   })
+    .instruction();
+
+    tx.add(ix);
+
+    const sig = await anchor.web3.sendAndConfirmTransaction(
+      program.provider.connection,
+      tx,
+      [payer]
+    );
+    console.log(await program.account.subscription.fetch(subAA))
+
+  });
+
 });
