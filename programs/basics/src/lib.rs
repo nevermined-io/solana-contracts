@@ -42,6 +42,25 @@ pub mod anchor {
         Ok(())
     }
 
+    pub fn mint_subscription(ctx: Context<MintSubscription>, amount: u64) -> Result<()> {
+        if ctx.accounts.sub.provider != ctx.accounts.signer.key() {
+            return err!(Errors::NoMatch);
+        };
+        ctx.accounts.sub.tokens += amount;
+        Ok(())
+    }
+
+    pub fn burn_subscription(ctx: Context<BurnSubscription>, amount: u64) -> Result<()> {
+        if ctx.accounts.sub.provider != ctx.accounts.signer.key() {
+            return err!(Errors::NoMatch);
+        };
+        if ctx.accounts.sub.tokens < amount {
+            return err!(Errors::NoMatch);
+        };
+        ctx.accounts.sub.tokens -= amount;
+        Ok(())
+    }
+
     pub fn buy_subscription(ctx: Context<BuySubscription>) -> Result<()> {
         if ctx.accounts.sub.consumer != ctx.accounts.signer.key() {
             return err!(Errors::NoMatch);
@@ -191,6 +210,33 @@ pub struct BuySubscription<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
+
+#[derive(Accounts)]
+#[instruction(amount: u64)]
+pub struct MintSubscription<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    #[account(mut)]
+    pub info: Account<'info, Service>,
+    #[account(mut)]
+    pub sub: Account<'info, Subscription>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+#[derive(Accounts)]
+#[instruction(amount: u64)]
+pub struct BurnSubscription<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    #[account(mut)]
+    pub info: Account<'info, Service>,
+    #[account(mut)]
+    pub sub: Account<'info, Subscription>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
 
 #[derive(Accounts)]
 pub struct CreateTokenAccount<'info> {
