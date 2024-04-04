@@ -18,12 +18,14 @@ pub mod anchor {
         NoMatch,
     }
 
-    pub fn create_test(ctx: Context<CreateService>, cost: u64) -> Result<()> {
+    pub fn create_test(ctx: Context<CreateService>, price: u64, credits: u64, metadata: [u8; 256]) -> Result<()> {
         msg!("Creating something");
         *ctx.accounts.new_account = Service {
             owner: ctx.accounts.signer.key(),
             provider: ctx.accounts.signer.key(),
-            cost,
+            price,
+            credits,
+            metadata,
         };
         Ok(())
     }
@@ -65,7 +67,7 @@ pub mod anchor {
         if ctx.accounts.sub.consumer != ctx.accounts.signer.key() {
             return err!(Errors::NoMatch);
         };
-        ctx.accounts.sub.tokens += 10;
+        ctx.accounts.sub.tokens += ctx.accounts.info.credits;
         let cpi_accounts = TransferChecked {
             from: ctx.accounts.consumer_aa.to_account_info().clone(),
             mint: ctx.accounts.mint.to_account_info().clone(),
@@ -74,7 +76,7 @@ pub mod anchor {
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
-        token_interface::transfer_checked(cpi_context, ctx.accounts.info.cost, ctx.accounts.mint.decimals)?;
+        token_interface::transfer_checked(cpi_context, ctx.accounts.info.price, ctx.accounts.mint.decimals)?;
         Ok(())
     }
 
@@ -82,7 +84,9 @@ pub mod anchor {
 
 
 #[derive(Accounts)]
-#[instruction(cost: u64)]
+#[instruction(price: u64)]
+#[instruction(credits: u64)]
+#[instruction(metadata: [u8; 256])]
 pub struct CreateService<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -173,7 +177,9 @@ pub struct BurnSubscription<'info> {
 pub struct Service {
     pub owner: Pubkey,
     pub provider: Pubkey,
-    pub cost: u64,
+    pub price: u64,
+    pub credits: u64,
+    pub metadata: [u8; 256],
 }
 
 // account for consumer (agreement)

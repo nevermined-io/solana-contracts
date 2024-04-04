@@ -157,7 +157,7 @@ describe("anchor", () => {
     */
 
     const ix = await program.methods
-      .createTest(new anchor.BN(12))
+      .createTest(new anchor.BN(12), new anchor.BN(10), [...Array(256).keys()])
       .accounts({
         signer: payer.publicKey,
         newAccount: testAA,
