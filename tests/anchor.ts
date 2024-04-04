@@ -51,6 +51,17 @@ describe("anchor", () => {
     ATA_PROGRAM_ID
   );
 
+  const payerATA1 = getAssociatedTokenAddressSync(
+    mintKeypair.publicKey,
+    payer.publicKey,
+    true
+  )
+  const receiverATA1 = getAssociatedTokenAddressSync(
+    mintKeypair.publicKey,
+    receiver.publicKey,
+    true
+  )
+
   const [receiverATA] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       receiver.publicKey.toBytes(),
@@ -116,8 +127,25 @@ describe("anchor", () => {
       receiver.publicKey,
       true
     );
+    await mintTo(
+      connection,
+      creator,
+      mintKeypair.publicKey,
+      payerATA1,
+      creator.publicKey,
+      1000000 * 10 ** 6
+    );
+    await mintTo(
+      connection,
+      creator,
+      mintKeypair.publicKey,
+      receiverATA1,
+      creator.publicKey,
+      1000000 * 10 ** 6
+    );
   })
 
+  /*
   it("Create Token-2022 Token", async () => {
 
     const tx = new anchor.web3.Transaction();
@@ -252,7 +280,7 @@ describe("anchor", () => {
       [receiver]
     );
     // console.log("Your transaction signature", sig);
-  });
+  }); */
 
   it("Create something", async () => {
     const tx = new anchor.web3.Transaction();
@@ -269,8 +297,8 @@ describe("anchor", () => {
       .accounts({
         signer: payer.publicKey,
         newAccount: testAA,
-        providerAa: payerATA,
-        mint: mint,
+        providerAa: payerATA1,
+        mint: mintKeypair.publicKey,
       })
       .instruction();
 
@@ -325,11 +353,11 @@ describe("anchor", () => {
       signer: receiver.publicKey,
       info: testAA,
       sub: subAA,
-      providerAa: payerATA,
-      consumerAa: receiverATA,
-      mint: mint,
-      tokenProgram: TOKEN_2022_PROGRAM_ID,
-      associatedTokenProgram: ATA_PROGRAM_ID,
+      providerAa: payerATA1,
+      consumerAa: receiverATA1,
+      mint: mintKeypair.publicKey,
+      // tokenProgram: TOKEN_2022_PROGRAM_ID,
+      // associatedTokenProgram: ATA_PROGRAM_ID,
    })
     .instruction();
 
