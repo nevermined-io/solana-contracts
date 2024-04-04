@@ -2,6 +2,14 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Anchor } from "../target/types/anchor";
 import { getAccount } from "@solana/spl-token";
+import { expect } from "chai";
+
+import {
+  createMint,
+  getAssociatedTokenAddressSync,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+} from "@solana/spl-token";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -19,6 +27,7 @@ describe("anchor", () => {
   // const payer = provider.wallet as anchor.Wallet;
   const payer = anchor.web3.Keypair.generate();
   const receiver = anchor.web3.Keypair.generate();
+  const mintKeypair = anchor.web3.Keypair.generate();
   const ATA_PROGRAM_ID = new anchor.web3.PublicKey(
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
   );
@@ -68,21 +77,50 @@ describe("anchor", () => {
     program.programId
   );
 
-  it("Create Token-2022 Token", async () => {
-    console.log("req1")
+  it("init accounts", async () => {
     console.log(await connection.requestAirdrop(receiver.publicKey, 1000000000));
-    console.log("req2")
     await connection.requestAirdrop(payer.publicKey, 1000000000);
     await connection.requestAirdrop(payer.publicKey, 1000000000);
-    const tx = new anchor.web3.Transaction();
 
     await sleep(1000);
 
+    /*
     console.log(await connection.getAccountInfo(payer.publicKey));
     console.log(await connection.getBalance(payer.publicKey, {commitment: "processed"}));
 
     console.log(receiver.publicKey, payer.publicKey)
+    */
+  })
 
+  it("Create tokens", async () => {
+    let creator = payer
+    await createMint(
+      connection,
+      creator,
+      creator.publicKey,
+      creator.publicKey,
+      6,
+      mintKeypair
+    );
+    await getOrCreateAssociatedTokenAccount(
+      connection,
+      payer,
+      mintKeypair.publicKey,
+      payer.publicKey,
+      true
+    );
+    await getOrCreateAssociatedTokenAccount(
+      connection,
+      receiver,
+      mintKeypair.publicKey,
+      receiver.publicKey,
+      true
+    );
+  })
+
+  it("Create Token-2022 Token", async () => {
+
+    const tx = new anchor.web3.Transaction();
     const ix = await program.methods
       .createToken(tokenName)
       .accounts({
@@ -95,7 +133,6 @@ describe("anchor", () => {
 
     tx.add(ix);
 
-    console.log("hmm what")
     const sig = await anchor.web3.sendAndConfirmTransaction(
       program.provider.connection,
       tx,
@@ -105,7 +142,7 @@ describe("anchor", () => {
   });
 
   it("Initialize payer ATA", async () => {
-    console.log(await connection.getBalance(payer.publicKey));
+    // console.log(await connection.getBalance(payer.publicKey));
     await sleep(200);
     const tx = new anchor.web3.Transaction();
 
@@ -131,11 +168,11 @@ describe("anchor", () => {
 
 
   it("Mint Token to payer", async () => {
-    console.log(await connection.getBalance(payer.publicKey));
+    // console.log(await connection.getBalance(payer.publicKey));
     await sleep(200);
-    console.log(await connection.getAccountInfo(payerATA));
+    // console.log(await connection.getAccountInfo(payerATA));
 
-    console.log("token data", await getAccount(connection, payerATA, undefined, TOKEN_2022_PROGRAM_ID))
+    // console.log("token data", await getAccount(connection, payerATA, undefined, TOKEN_2022_PROGRAM_ID))
 
     const tx = new anchor.web3.Transaction();
 
@@ -163,7 +200,7 @@ describe("anchor", () => {
   // Using init in the transfer instruction, as init if needed is bot working with Token 2022 yet.
   it("Transfer Token", async () => {
     await sleep(200);
-    console.log("token data", await getAccount(connection, payerATA, undefined, TOKEN_2022_PROGRAM_ID))
+    // console.log("token data", await getAccount(connection, payerATA, undefined, TOKEN_2022_PROGRAM_ID))
     const tx = new anchor.web3.Transaction();
 
     const ix = await program.methods
@@ -191,7 +228,7 @@ describe("anchor", () => {
 
   it("Transfer Token (2)", async () => {
     await sleep(200);
-    console.log("token data", await getAccount(connection, payerATA, undefined, TOKEN_2022_PROGRAM_ID))
+    // console.log("token data", await getAccount(connection, payerATA, undefined, TOKEN_2022_PROGRAM_ID))
     const tx = new anchor.web3.Transaction();
 
     const ix = await program.methods
@@ -214,21 +251,18 @@ describe("anchor", () => {
       tx,
       [receiver]
     );
-    console.log("Your transaction signature", sig);
+    // console.log("Your transaction signature", sig);
   });
 
   it("Create something", async () => {
-    console.log(await connection.requestAirdrop(receiver.publicKey, 1000000000));
-    await connection.requestAirdrop(payer.publicKey, 1000000000);
-    await connection.requestAirdrop(payer.publicKey, 1000000000);
     const tx = new anchor.web3.Transaction();
 
-    await sleep(1000);
-
+    /*
     console.log(await connection.getAccountInfo(payer.publicKey));
     console.log(await connection.getBalance(payer.publicKey, {commitment: "processed"}));
 
     console.log(receiver.publicKey, payer.publicKey)
+    */
 
     const ix = await program.methods
       .createTest(new anchor.BN(12))
@@ -242,18 +276,19 @@ describe("anchor", () => {
 
     tx.add(ix);
 
-    console.log("hmm what")
     const sig = await anchor.web3.sendAndConfirmTransaction(
       program.provider.connection,
       tx,
       [payer]
     );
+    /*
     console.log("Your transaction signature", sig);
 
     console.log(await program.account.service.fetch(testAA))
     console.log(await connection.getAccountInfo(testAA))
 
     console.log(program.programId)
+    */
   })
 
   it("create subscription", async () => {
@@ -271,13 +306,13 @@ describe("anchor", () => {
 
     tx.add(ix);
 
-    console.log("hmm what")
+    // console.log("hmm what")
     const sig = await anchor.web3.sendAndConfirmTransaction(
       program.provider.connection,
       tx,
       [receiver]
     );
-    console.log(await program.account.subscription.fetch(subAA))
+    expect("0").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
 
   });
 
@@ -300,13 +335,13 @@ describe("anchor", () => {
 
     tx.add(ix);
 
-    console.log("hmm what")
     const sig = await anchor.web3.sendAndConfirmTransaction(
       program.provider.connection,
       tx,
       [receiver]
     );
-    console.log(await program.account.subscription.fetch(subAA))
+    // console.log(await program.account.subscription.fetch(subAA))
+    expect("10").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
 
   });
 
@@ -330,7 +365,8 @@ describe("anchor", () => {
       tx,
       [payer]
     );
-    console.log(await program.account.subscription.fetch(subAA))
+    // console.log(await program.account.subscription.fetch(subAA))
+    expect("110").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
 
   });
 
@@ -354,8 +390,7 @@ describe("anchor", () => {
       tx,
       [payer]
     );
-    console.log(await program.account.subscription.fetch(subAA))
-
+    expect("10").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
   });
 
 });
