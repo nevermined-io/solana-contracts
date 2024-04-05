@@ -6,7 +6,7 @@ use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
-declare_id!("6qNqxkRF791FXFeQwqYQLEzAbGiqDULC5SSHVsfRoG89");
+declare_id!("HrdSsNtKSXD2m6V8zQzNVELGHjc6T6CCJQc6uaBxfNwU");
 
 #[program]
 pub mod anchor {
