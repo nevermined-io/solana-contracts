@@ -27,6 +27,7 @@ describe("anchor", () => {
   // const payer = provider.wallet as anchor.Wallet;
   const payer = anchor.web3.Keypair.generate();
   const receiver = anchor.web3.Keypair.generate();
+  const server = anchor.web3.Keypair.generate();
   const mintKeypair = anchor.web3.Keypair.generate();
   const ATA_PROGRAM_ID = new anchor.web3.PublicKey(
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
@@ -42,14 +43,6 @@ describe("anchor", () => {
     ],
     program.programId
   );
-  const [payerATA] = anchor.web3.PublicKey.findProgramAddressSync(
-    [
-      payer.publicKey.toBytes(),
-      TOKEN_2022_PROGRAM_ID.toBytes(),
-      mint.toBytes(),
-    ],
-    ATA_PROGRAM_ID
-  );
 
   const payerATA1 = getAssociatedTokenAddressSync(
     mintKeypair.publicKey,
@@ -61,15 +54,6 @@ describe("anchor", () => {
     receiver.publicKey,
     true
   )
-
-  const [receiverATA] = anchor.web3.PublicKey.findProgramAddressSync(
-    [
-      receiver.publicKey.toBytes(),
-      TOKEN_2022_PROGRAM_ID.toBytes(),
-      mint.toBytes(),
-    ],
-    ATA_PROGRAM_ID
-  );
 
   const [testAA] = anchor.web3.PublicKey.findProgramAddressSync(
     [
@@ -88,10 +72,20 @@ describe("anchor", () => {
     program.programId
   );
 
+  const [providerAA] = anchor.web3.PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("provider"),
+      payer.publicKey.toBytes(),
+      testAA.toBytes(),
+      server.publicKey.toBytes(),
+    ],
+    program.programId
+  );
+
   it("init accounts", async () => {
     console.log(await connection.requestAirdrop(receiver.publicKey, 1000000000));
     await connection.requestAirdrop(payer.publicKey, 1000000000);
-    await connection.requestAirdrop(payer.publicKey, 1000000000);
+    await connection.requestAirdrop(server.publicKey, 1000000000);
 
     await sleep(1000);
 
@@ -146,7 +140,7 @@ describe("anchor", () => {
   })
 
 
-  it("Create something", async () => {
+  it("Create info", async () => {
     const tx = new anchor.web3.Transaction();
 
     /*
@@ -157,11 +151,10 @@ describe("anchor", () => {
     */
 
     const ix = await program.methods
-      .createTest(new anchor.BN(12), new anchor.BN(10), [...Array(256).keys()])
+      .createInfo(new anchor.BN(12), new anchor.BN(10), [...Array(256).keys()])
       .accounts({
         signer: payer.publicKey,
         newAccount: testAA,
-        providerAa: payerATA1,
         mint: mintKeypair.publicKey,
       })
       .instruction();
@@ -183,6 +176,28 @@ describe("anchor", () => {
     */
   })
 
+  it("Create provider", async () => {
+    const tx = new anchor.web3.Transaction();
+
+    const ix = await program.methods
+      .createProvider()
+      .accounts({
+        signer: payer.publicKey,
+        provider: server.publicKey,
+        info: testAA,
+        newAccount: providerAA,
+      })
+      .instruction();
+
+    tx.add(ix);
+
+    const sig = await anchor.web3.sendAndConfirmTransaction(
+      program.provider.connection,
+      tx,
+      [payer]
+    );
+  })
+
   it("create subscription", async () => {
 
     const tx = new anchor.web3.Transaction();
@@ -190,7 +205,6 @@ describe("anchor", () => {
     .createEmpty()
     .accounts({
       signer: receiver.publicKey,
-      provider: payer.publicKey,
       info: testAA,
       newAccount: subAA,
     })
@@ -271,7 +285,6 @@ describe("anchor", () => {
       signer: payer.publicKey,
       info: testAA,
       sub: subAA,
-      tokenProgram: TOKEN_2022_PROGRAM_ID,
    })
     .instruction();
 
@@ -281,6 +294,54 @@ describe("anchor", () => {
       program.provider.connection,
       tx,
       [payer]
+    );
+    expect("10").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
+  });
+
+  it("mint subscription with provider", async () => {
+
+    const tx = new anchor.web3.Transaction();
+    const ix = await program.methods
+    .mintSubscriptionProvider(new anchor.BN(100))
+    .accounts({
+      signer: server.publicKey,
+      info: testAA,
+      sub: subAA,
+      provider: providerAA,
+   })
+    .instruction();
+
+    tx.add(ix);
+
+    const sig = await anchor.web3.sendAndConfirmTransaction(
+      program.provider.connection,
+      tx,
+      [server]
+    );
+    // console.log(await program.account.subscription.fetch(subAA))
+    expect("110").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
+
+  });
+
+  it("burn subscription with provider", async () => {
+
+    const tx = new anchor.web3.Transaction();
+    const ix = await program.methods
+    .burnSubscriptionProvider(new anchor.BN(100))
+    .accounts({
+      signer: server.publicKey,
+      info: testAA,
+      sub: subAA,
+      provider: providerAA,
+   })
+    .instruction();
+
+    tx.add(ix);
+
+    const sig = await anchor.web3.sendAndConfirmTransaction(
+      program.provider.connection,
+      tx,
+      [server]
     );
     expect("10").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
   });
