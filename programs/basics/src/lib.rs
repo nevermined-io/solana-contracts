@@ -22,7 +22,6 @@ pub mod anchor {
         msg!("Creating something");
         *ctx.accounts.new_account = Service {
             owner: ctx.accounts.signer.key(),
-            provider: ctx.accounts.signer.key(),
             price,
             credits,
             metadata,
@@ -32,12 +31,13 @@ pub mod anchor {
 
     pub fn create_empty(ctx: Context<CreateEmpty>) -> Result<()> {
         msg!("Creating something");
+        /*
         if ctx.accounts.info.provider != ctx.accounts.provider.key() {
             return err!(Errors::NoMatch);
-        };
+        };*/
         *ctx.accounts.new_account = Subscription {
             consumer: ctx.accounts.signer.key(),
-            provider: ctx.accounts.provider.key(),
+            // provider: ctx.accounts.provider.key(),
             info: ctx.accounts.info.key(),
             tokens: 0,
         };
@@ -45,7 +45,7 @@ pub mod anchor {
     }
 
     pub fn mint_subscription(ctx: Context<MintSubscription>, amount: u64) -> Result<()> {
-        if ctx.accounts.sub.provider != ctx.accounts.signer.key() {
+        if ctx.accounts.info.owner != ctx.accounts.signer.key() {
             return err!(Errors::NoMatch);
         };
         ctx.accounts.sub.tokens += amount;
@@ -53,7 +53,7 @@ pub mod anchor {
     }
 
     pub fn burn_subscription(ctx: Context<BurnSubscription>, amount: u64) -> Result<()> {
-        if ctx.accounts.sub.provider != ctx.accounts.signer.key() {
+        if ctx.accounts.info.owner != ctx.accounts.signer.key() {
             return err!(Errors::NoMatch);
         };
         if ctx.accounts.sub.tokens < amount {
@@ -176,7 +176,6 @@ pub struct BurnSubscription<'info> {
 #[derive(InitSpace)]
 pub struct Service {
     pub owner: Pubkey,
-    pub provider: Pubkey,
     pub price: u64,
     pub credits: u64,
     pub metadata: [u8; 256],
@@ -186,8 +185,17 @@ pub struct Service {
 #[account]
 #[derive(InitSpace)]
 pub struct Subscription {
-    pub provider: Pubkey,
-    pub consumer: Pubkey,
+    // pub provider: Pubkey,
     pub info: Pubkey,
+    pub consumer: Pubkey,
     pub tokens: u64,
 }
+
+// account for provider
+#[account]
+#[derive(InitSpace)]
+pub struct Provider {
+    pub info: Pubkey,
+    pub provider: Pubkey,
+}
+
