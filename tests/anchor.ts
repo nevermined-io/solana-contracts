@@ -23,28 +23,11 @@ describe("anchor", () => {
 
   const program = anchor.workspace.Anchor as Program<Anchor>;
   const connection = program.provider.connection;
-  const TOKEN_2022_PROGRAM_ID = new anchor.web3.PublicKey(
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-  );
   // const payer = provider.wallet as anchor.Wallet;
   const payer = anchor.web3.Keypair.generate();
   const receiver = anchor.web3.Keypair.generate();
   const server = anchor.web3.Keypair.generate();
   const mintKeypair = anchor.web3.Keypair.generate();
-  const ATA_PROGRAM_ID = new anchor.web3.PublicKey(
-    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-  );
-
-  const tokenName = "TestToken";
-  const [mint] = anchor.web3.PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("token-2022-token"),
-      payer.publicKey.toBytes(),
-      Buffer.from(tokenName),
-      receiver.publicKey.toBytes(),
-    ],
-    program.programId
-  );
 
   const payerATA1 = getAssociatedTokenAddressSync(
     mintKeypair.publicKey,
@@ -147,6 +130,14 @@ describe("anchor", () => {
       creator.publicKey,
       1000000 * 10 ** 6
     );
+    await mintTo(
+      connection,
+      creator,
+      mintKeypair.publicKey,
+      nvmATA,
+      creator.publicKey,
+      1000000 * 10 ** 6
+    );
   })
 
 
@@ -242,6 +233,7 @@ describe("anchor", () => {
       sub: subAA,
       providerAa: payerATA1,
       consumerAa: receiverATA1,
+      nvmAa: nvmATA,
       mint: mintKeypair.publicKey,
    })
     .instruction();

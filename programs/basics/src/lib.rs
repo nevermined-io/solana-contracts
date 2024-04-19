@@ -136,17 +136,16 @@ pub mod anchor {
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         token_interface::transfer_checked(cpi_context, ctx.accounts.info.price, ctx.accounts.mint.decimals)?;
 
-        /* 
         let cpi_accounts = TransferChecked {
             from: ctx.accounts.consumer_aa.to_account_info().clone(),
             mint: ctx.accounts.mint.to_account_info().clone(),
-            to: ctx.accounts.provider_aa.to_account_info().clone(),
+            to: ctx.accounts.nvm_aa.to_account_info().clone(),
             authority: ctx.accounts.signer.to_account_info(),
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
-        token_interface::transfer_checked(cpi_context, ctx.accounts.info.price, ctx.accounts.mint.decimals)?;
-        */
+        token_interface::transfer_checked(cpi_context, ctx.accounts.info.price/100, ctx.accounts.mint.decimals)?;
+
         Ok(())
     }
 
@@ -224,6 +223,8 @@ pub struct BuySubscription<'info> {
     pub provider_aa: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub consumer_aa: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub nvm_aa: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub mint: InterfaceAccount<'info, Mint>,
     pub system_program: Program<'info, System>,
