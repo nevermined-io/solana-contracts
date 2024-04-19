@@ -78,7 +78,7 @@ describe("anchor", () => {
     await connection.requestAirdrop(server.publicKey, 1000000000);
 
     // console.log(receiver.publicKey, pubkey)
-    console.log(nvmATA)
+    console.log(nvmATA, nvmPublicKey)
 
     await sleep(1000);
 
@@ -112,6 +112,13 @@ describe("anchor", () => {
       receiver,
       mintKeypair.publicKey,
       receiver.publicKey,
+      true
+    );
+    await getOrCreateAssociatedTokenAccount(
+      connection,
+      receiver,
+      mintKeypair.publicKey,
+      nvmPublicKey,
       true
     );
     await mintTo(
@@ -152,7 +159,7 @@ describe("anchor", () => {
     */
 
     const ix = await program.methods
-      .createInfo(new anchor.BN(12), new anchor.BN(10), [...Array(256).keys()])
+      .createInfo(new anchor.BN(120 * 10**6), new anchor.BN(10), [...Array(256).keys()])
       .accounts({
         signer: payer.publicKey,
         newAccount: testAA,
@@ -247,6 +254,8 @@ describe("anchor", () => {
     );
     // console.log(await program.account.subscription.fetch(subAA))
     expect("10").to.eq((await program.account.subscription.fetch(subAA)).tokens.toString())
+
+    console.log(await getAccount(connection, nvmATA))
 
   });
 

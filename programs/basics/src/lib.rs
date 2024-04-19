@@ -124,6 +124,9 @@ pub mod anchor {
         if ctx.accounts.info.mint != ctx.accounts.mint.key() {
             return err!(Errors::NoMatch);
         };
+        if ctx.accounts.nvm_aa.owner != Pubkey::try_from("HgU4FjuaXLQEen3rDDjygCSS5xj8maGci5eEuzKVJXYZ").unwrap() {
+            return err!(Errors::NoMatch);
+        };
         ctx.accounts.sub.tokens += ctx.accounts.info.credits;
 
         let cpi_accounts = TransferChecked {
