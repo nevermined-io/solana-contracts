@@ -19,6 +19,8 @@ describe("anchor", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
+  const nvmPublicKey = new anchor.web3.PublicKey("HgU4FjuaXLQEen3rDDjygCSS5xj8maGci5eEuzKVJXYZ")
+
   const program = anchor.workspace.Anchor as Program<Anchor>;
   const connection = program.provider.connection;
   const TOKEN_2022_PROGRAM_ID = new anchor.web3.PublicKey(
@@ -54,6 +56,11 @@ describe("anchor", () => {
     receiver.publicKey,
     true
   )
+  const nvmATA = getAssociatedTokenAddressSync(
+    mintKeypair.publicKey,
+    nvmPublicKey,
+    true
+  )
 
   const [testAA] = anchor.web3.PublicKey.findProgramAddressSync(
     [
@@ -82,10 +89,13 @@ describe("anchor", () => {
     program.programId
   );
 
-  it("init accounts", async () => {
+  it("Init accounts", async () => {
     console.log(await connection.requestAirdrop(receiver.publicKey, 1000000000));
     await connection.requestAirdrop(payer.publicKey, 1000000000);
     await connection.requestAirdrop(server.publicKey, 1000000000);
+
+    // console.log(receiver.publicKey, pubkey)
+    console.log(nvmATA)
 
     await sleep(1000);
 
@@ -212,7 +222,6 @@ describe("anchor", () => {
 
     tx.add(ix);
 
-    // console.log("hmm what")
     const sig = await anchor.web3.sendAndConfirmTransaction(
       program.provider.connection,
       tx,
@@ -234,8 +243,6 @@ describe("anchor", () => {
       providerAa: payerATA1,
       consumerAa: receiverATA1,
       mint: mintKeypair.publicKey,
-      // tokenProgram: TOKEN_2022_PROGRAM_ID,
-      // associatedTokenProgram: ATA_PROGRAM_ID,
    })
     .instruction();
 
@@ -260,7 +267,6 @@ describe("anchor", () => {
       signer: payer.publicKey,
       info: testAA,
       sub: subAA,
-      tokenProgram: TOKEN_2022_PROGRAM_ID,
    })
     .instruction();
 

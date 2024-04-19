@@ -19,9 +19,10 @@ pub mod anchor {
     }
 
     pub fn create_info(ctx: Context<CreateService>, price: u64, credits: u64, metadata: [u8; 256]) -> Result<()> {
-        msg!("Creating something");
+        msg!("Creating service");
         *ctx.accounts.new_account = Service {
             owner: ctx.accounts.signer.key(),
+            mint: ctx.accounts.mint.key(),
             price,
             credits,
             metadata,
@@ -30,7 +31,7 @@ pub mod anchor {
     }
 
     pub fn create_empty(ctx: Context<CreateEmpty>) -> Result<()> {
-        msg!("Creating something");
+        msg!("Creating account");
         /*
         if ctx.accounts.info.provider != ctx.accounts.provider.key() {
             return err!(Errors::NoMatch);
@@ -120,7 +121,11 @@ pub mod anchor {
         if ctx.accounts.info.key() != ctx.accounts.sub.info {
             return err!(Errors::NoMatch);
         };
+        if ctx.accounts.info.mint != ctx.accounts.mint.key() {
+            return err!(Errors::NoMatch);
+        };
         ctx.accounts.sub.tokens += ctx.accounts.info.credits;
+
         let cpi_accounts = TransferChecked {
             from: ctx.accounts.consumer_aa.to_account_info().clone(),
             mint: ctx.accounts.mint.to_account_info().clone(),
@@ -130,6 +135,18 @@ pub mod anchor {
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         token_interface::transfer_checked(cpi_context, ctx.accounts.info.price, ctx.accounts.mint.decimals)?;
+
+        /* 
+        let cpi_accounts = TransferChecked {
+            from: ctx.accounts.consumer_aa.to_account_info().clone(),
+            mint: ctx.accounts.mint.to_account_info().clone(),
+            to: ctx.accounts.provider_aa.to_account_info().clone(),
+            authority: ctx.accounts.signer.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+        token_interface::transfer_checked(cpi_context, ctx.accounts.info.price, ctx.accounts.mint.decimals)?;
+        */
         Ok(())
     }
 
@@ -278,6 +295,7 @@ pub struct BurnSubscriptionProvider<'info> {
 pub struct Service {
     pub owner: Pubkey,
     pub price: u64,
+    pub mint: Pubkey,
     pub credits: u64,
     pub metadata: [u8; 256],
 }
